@@ -622,21 +622,34 @@
         </div>
 
         <!-- Dynamic Live QR Code Container -->
-        <div class="bg-white p-3 rounded-2xl border border-slate-200 text-center space-y-2">
+        <div class="bg-white p-3.5 rounded-2xl border border-slate-200 text-center space-y-2.5 shadow-2xs">
           <div class="text-[11px] font-bold text-slate-700 flex items-center justify-center gap-1">
             <i data-lucide="scan" class="w-3.5 h-3.5 text-forest-900"></i>
             <span>Scan with any UPI App (GPay / PhonePe / Paytm)</span>
           </div>
-          <div id="qrcode-container" class="flex justify-center p-2 bg-white rounded-xl mx-auto w-fit">
+          
+          <div id="qrcode-container" class="flex justify-center p-2 bg-white rounded-xl mx-auto w-fit border border-slate-100 shadow-2xs">
             <!-- QR rendered dynamically -->
+          </div>
+
+          <!-- 1-Click QR Action Buttons -->
+          <div class="flex items-center justify-center gap-2 pt-0.5">
+            <button id="btn-download-qr" type="button" class="text-[11px] font-bold text-forest-950 bg-sage-100 hover:bg-sage-200 border border-sage-200 px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition-colors active:scale-95 shadow-2xs">
+              <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-700"></i>
+              <span>Save QR to Gallery</span>
+            </button>
+            <button id="btn-share-native-qr" type="button" class="text-[11px] font-bold text-sand-200 bg-forest-900 hover:bg-forest-800 px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition-colors active:scale-95 shadow-xs">
+              <i data-lucide="share-2" class="w-3.5 h-3.5 text-sand-300"></i>
+              <span>Share QR Image</span>
+            </button>
           </div>
           <p class="text-[10px] text-slate-400 font-mono">Instant zero-fee direct bank transfer</p>
         </div>
 
-        <!-- Editable Message Box with UPI Link & ID -->
+        <!-- Editable Message Box with UPI Link, ID & QR URL -->
         <div class="space-y-1.5">
           <div class="flex justify-between items-center">
-            <label class="text-[10px] font-bold uppercase text-slate-400">WhatsApp Message (Editable):</label>
+            <label class="text-[10px] font-bold uppercase text-slate-400">WhatsApp Message (With Pay Link & QR Image):</label>
             <button id="btn-regenerate-reminder-text" class="text-[10px] text-forest-900 font-bold hover:underline flex items-center gap-1">
               <i data-lucide="rotate-cw" class="w-3 h-3"></i> Reword with AI
             </button>
@@ -648,13 +661,13 @@
         <div class="space-y-2 pt-1">
           <button id="btn-send-whatsapp" class="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-xs py-3 rounded-xl shadow-sm flex items-center justify-center space-x-2 transition-transform active:scale-98">
             <i data-lucide="message-circle" class="w-4 h-4"></i>
-            <span>Send on WhatsApp (wa.me)</span>
+            <span>Send on WhatsApp (With Image & Link)</span>
           </button>
           
           <div class="flex space-x-2">
             <button id="btn-copy-reminder" class="flex-1 bg-sage-100 hover:bg-sage-200 text-forest-950 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-1 transition-colors">
               <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-              <span>Copy Message</span>
+              <span>Copy Full Message</span>
             </button>
             <button id="btn-copy-upi" class="flex-1 bg-sage-100 hover:bg-sage-200 text-forest-950 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-1 transition-colors">
               <i data-lucide="link" class="w-3.5 h-3.5"></i>

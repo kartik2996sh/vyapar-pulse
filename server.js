@@ -213,6 +213,7 @@ function fallbackGenerateReminder(params) {
   const formattedAmt = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
   const item = itemDescription || 'kirana items';
   const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${amount}&cu=INR&tn=Bill+Payment`;
+  const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiLink)}`;
 
   if (daysOverdue && daysOverdue > 0) {
     return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'pichle hafte'} ko due tha aur pending hai.
@@ -223,6 +224,9 @@ Kripya niche diye link se seedha UPI dwara payment karein:
 Ya is UPI ID par pay karein:
 🆔 UPI ID: ${upiId}
 
+📸 Scan QR Code Image:
+${qrImageUrl}
+
 Dhanyavaad — ${storeName}`;
   } else {
     return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'is hafte'} ko due hai.
@@ -232,6 +236,9 @@ Kripya niche diye link se UPI dwara samay par payment karein:
 
 Ya is UPI ID par bhejein:
 🆔 UPI ID: ${upiId}
+
+📸 Scan QR Code Image:
+${qrImageUrl}
 
 Dhanyavaad — ${storeName}`;
   }
@@ -490,6 +497,7 @@ const server = http.createServer(async (req, res) => {
       const body = await readBody();
       const { customerName, amount, itemDescription, dueDate, daysOverdue, storeName = 'Gupta Supermarket', upiId = 'guptastore@okaxis', apiKey, provider = 'gemini' } = body;
       const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${amount}&cu=INR&tn=Bill+Payment`;
+      const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiLink)}`;
 
       const reminderPrompt = `You are a polite assistant for a neighborhood Indian grocery store called "${storeName}". 
 Write a natural, respectful payment reminder message in Hinglish / Hindi. 
@@ -501,7 +509,8 @@ Details:
 - Days Overdue: ${daysOverdue || 0}
 - Direct UPI Link: ${upiLink}
 - Store UPI ID: ${upiId}
-Keep it short (3-4 sentences), warm, and include both the UPI Link and the UPI ID clearly so the customer can tap and pay immediately. Respond with ONLY the message text.`;
+- QR Code Image Link: ${qrImageUrl}
+Keep it short (3-4 sentences), warm, and include both the direct UPI Link, the Store UPI ID, and the QR Code Image Link so the customer can tap and pay or scan the QR immediately. Respond with ONLY the message text.`;
 
       try {
         const message = await callLLM({

@@ -3,17 +3,18 @@
  * Features:
  * 1. Clean, attractive mint/forest green design language
  * 2. WhatsApp Reminders with Direct UPI Payment Link, UPI ID, and Dynamic QR Code
- * 3. Deterministic Financial Arithmetic (Pure code, 0% LLM calculation errors)
- * 4. Silent AI Brain Jobs: Extractor (Job 1), Cash-Flow Insights (Job 2), Reminder Writer (Job 3)
- * 5. Web Speech API real-time microphone support in Hindi/Hinglish
- * 6. 5-step live verification loop for live demonstrations
+ * 3. Native Image Share API (attaches real QR PNG on mobile) + Direct QR Image Link
+ * 4. Deterministic Financial Arithmetic (Pure code, 0% LLM calculation errors)
+ * 5. Silent AI Brain Jobs: Extractor (Job 1), Cash-Flow Insights (Job 2), Reminder Writer (Job 3)
+ * 6. Web Speech API real-time microphone support in Hindi/Hinglish
+ * 7. 5-step live verification loop for live demonstrations
  */
 
 // ============================================================
 // 1. STATE & STORAGE
 // ============================================================
-const STORAGE_KEY_CUSTOMERS = 'vyapar_pulse_customers_v2';
-const STORAGE_KEY_SETTINGS = 'vyapar_pulse_settings_v2';
+const STORAGE_KEY_CUSTOMERS = 'vyapar_pulse_customers_v3';
+const STORAGE_KEY_SETTINGS = 'vyapar_pulse_settings_v3';
 
 // Pre-seeded Realistic Supermarket Dataset (Aligned with high-end Kirana reference)
 const INITIAL_CUSTOMERS = [
@@ -54,7 +55,7 @@ const INITIAL_CUSTOMERS = [
         itemDescription: 'Bulk Dal & Basmati Rice restock',
         createdDate: getPastDateStr(14),
         creditDays: 7,
-        dueDate: getPastDateStr(7), // 7 days overdue (as in reference UI!)
+        dueDate: getPastDateStr(7), // 7 days overdue
         status: 'overdue',
         rawInputText: 'Ramesh Patel 12400 bulk ration 7 days credit',
         extractionConfidence: 'high'
@@ -154,7 +155,7 @@ const INITIAL_CUSTOMERS = [
 let appState = {
   customers: [],
   settings: {
-    upiId: 'guptastore@okaxis', // Default store UPI ID for direct customer payment
+    upiId: 'guptastore@okaxis', // Default store UPI ID
     storeName: 'Aarav Supermart',
     ownerName: 'Aarav',
     engineMode: 'auto',
@@ -163,12 +164,11 @@ let appState = {
   },
   currentExtraction: null,
   activeCustomerForModal: null,
-  receivablesChartInstance: null,
-  activeQrInstance: null
+  receivablesChartInstance: null
 };
 
 // ============================================================
-// 2. DETERMINISTIC FINANCIAL CALCULATIONS (NO ARITHMETIC BY LLM)
+// 2. DETERMINISTIC FINANCIAL ENGINE (PURE CODE, ZERO LLM MATH)
 // ============================================================
 
 function getTodayDateStr() {
@@ -205,12 +205,19 @@ function formatINR(amount) {
 function generateUpiUri(customerName, amount) {
   const upi = (appState.settings.upiId || 'guptastore@okaxis').trim();
   const store = (appState.settings.storeName || 'Aarav Supermart').trim();
-  const note = `Kirana bill settlement for ${customerName}`;
+  const note = `Kirana bill for ${customerName}`;
   return `upi://pay?pa=${encodeURIComponent(upi)}&pn=${encodeURIComponent(store)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
 }
 
 /**
- * Recalculate customer totalOutstanding and status deterministically
+ * Public Web URL for Instant QR Code Image Preview
+ */
+function generateQrImageUrl(upiUri) {
+  return `https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=${encodeURIComponent(upiUri)}`;
+}
+
+/**
+ * Recalculate customer balances and overdue status deterministically
  */
 function recalculateLedger() {
   const today = getTodayDateStr();
@@ -252,14 +259,12 @@ function recalculateLedger() {
     }
   });
 
-  // Sort descending by outstanding amount
   appState.customers.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
-
   saveStateToStorage();
 }
 
 /**
- * Compute Cash Flow Summary for Dashboard and Brain Job 2
+ * Compute Cash Flow Summary for Dashboard
  */
 function getCashFlowSummary() {
   const today = getTodayDateStr();
@@ -274,7 +279,6 @@ function getCashFlowSummary() {
   let totalReceivablesNext7Days = 0;
   let totalReceivablesNext30Days = 0;
 
-  // Initialize 7-day buckets
   const daily7Map = {};
   for (let i = 0; i < 7; i++) {
     const d = new Date();
@@ -290,7 +294,6 @@ function getCashFlowSummary() {
     customer.transactions.forEach(tx => {
       const amt = Number(tx.amount || 0);
 
-      // Today's activity
       if (tx.createdDate === today) {
         if (tx.type === 'cash_sale' || tx.type === 'credit_sale') {
           todaysSales += amt;
@@ -300,7 +303,6 @@ function getCashFlowSummary() {
         }
       }
 
-      // Receivables tracking (unpaid credit)
       if (tx.type === 'credit_sale' && tx.status !== 'paid') {
         if (tx.dueDate < today) {
           totalOverdue += amt;
@@ -336,7 +338,7 @@ function getCashFlowSummary() {
 }
 
 // ============================================================
-// 3. UI RENDERING & DASHBOARD SYNC
+// 3. UI RENDERING & DASHBOARD
 // ============================================================
 
 function renderDashboard() {
@@ -383,7 +385,6 @@ function updateReceivablesChart(dailyData) {
   const labels = dailyData.map(d => d.dayName);
   const values = dailyData.map(d => d.amount > 0 ? d.amount : Math.floor(1500 + Math.random() * 4000));
 
-  // Find max value to give it a nice accent highlight color (like in reference image)
   const maxVal = Math.max(...values);
   const backgroundColors = values.map(v => v === maxVal ? '#d9c293' : '#c5d7c3');
 
@@ -441,7 +442,6 @@ function renderRecentTransactions() {
   const container = document.getElementById('recent-transactions-container');
   if (!container) return;
 
-  // Flatten all transactions and sort by date descending
   const allTx = [];
   appState.customers.forEach(c => {
     c.transactions.forEach(t => {
@@ -586,7 +586,6 @@ function renderRemindersTab() {
     }
   });
 
-  // Render Overdue Cards
   if (overdueList.length === 0) {
     overdueContainer.innerHTML = `<div class="p-3 bg-emerald-50 text-emerald-800 text-xs rounded-2xl border border-emerald-100 text-center">🎉 No overdue payments! Outstanding udhaar is in healthy window.</div>`;
   } else {
@@ -600,7 +599,6 @@ function renderRemindersTab() {
           <div class="font-black font-display text-sm text-rose-600">${formatINR(item.customer.totalOutstanding)}</div>
         </div>
 
-        <!-- Action Row with WhatsApp + UPI QR Preview -->
         <div class="flex items-center space-x-2 pt-1">
           <button onclick="triggerAIReminder('${item.customer.id}')" class="flex-1 bg-forest-900 hover:bg-forest-800 text-sand-200 font-bold text-xs py-2.5 rounded-xl shadow-xs flex items-center justify-center space-x-1.5 transition-transform active:scale-95">
             <i data-lucide="qr-code" class="w-3.5 h-3.5 text-sand-300"></i>
@@ -614,7 +612,6 @@ function renderRemindersTab() {
     `).join('');
   }
 
-  // Render Upcoming Cards
   if (upcomingList.length === 0) {
     upcomingContainer.innerHTML = `<div class="p-2.5 bg-white text-slate-400 text-xs rounded-2xl border border-[#e5eae3] text-center">No collections due in the next 7 days.</div>`;
   } else {
@@ -902,7 +899,7 @@ function fallbackInsightsLocal(summary) {
 }
 
 // ============================================================
-// 6. BRAIN JOB 3: WHATSAPP REMINDER WITH UPI LINK, ID & QR
+// 6. BRAIN JOB 3: WHATSAPP REMINDER WITH UPI LINK, ID & REAL QR
 // ============================================================
 
 async function triggerAIReminder(customerId) {
@@ -924,9 +921,9 @@ async function triggerAIReminder(customerId) {
   targetNameEl.textContent = customer.name;
   targetAmtEl.textContent = formatINR(amount);
   targetUpiEl.textContent = upiId;
-  msgBox.value = 'Drafting polite Hinglish message with UPI Pay Link...';
+  msgBox.value = 'Drafting polite reminder with UPI Pay Link & QR image link...';
 
-  // 1. Render Dynamic Live UPI QR Code
+  // 1. Render Dynamic Live UPI QR Code on Canvas
   const upiUri = generateUpiUri(customer.name, amount);
   renderQrCode('qrcode-container', upiUri);
 
@@ -974,19 +971,25 @@ async function triggerAIReminder(customerId) {
   }
 }
 
+/**
+ * Generates Hinglish reminder containing BOTH the direct 1-tap UPI link AND the live QR Image URL
+ */
 function buildHinglishUpiMessage(name, amount, items, dueDate, daysOverdue, store, upiId, upiUri) {
   const formatted = formatINR(amount);
   const urgency = daysOverdue > 0 ? `${dueDate || 'pichle hafte'} ko due tha aur pending hai` : `${dueDate || 'is hafte'} ko due hai`;
+  const qrImageUrl = generateQrImageUrl(upiUri);
 
   return `Namaste ${name || 'ji'},
 
 Aapka ${formatted} ka kirana payment (${items || 'groceries'}) ${urgency}.
 
-Kripya niche diye gaye link par click karke direct kisi bhi UPI App (GPay / PhonePe / Paytm) se payment karein:
-👉 ${upiUri}
+👉 1-Click UPI Payment (GPay / PhonePe / Paytm):
+${upiUri}
 
-Ya seedha is UPI ID par bhejein:
 🆔 UPI ID: ${upiId}
+
+📸 Direct QR Code Image (Tap to open & scan):
+${qrImageUrl}
 
 Dhanyavaad!
 — ${store}`;
@@ -1000,28 +1003,163 @@ function renderQrCode(containerId, upiUri) {
   if (typeof QRCode !== 'undefined') {
     new QRCode(container, {
       text: upiUri,
-      width: 140,
-      height: 140,
+      width: 160,
+      height: 160,
       colorDark: '#103629',
       colorLight: '#ffffff',
-      correctLevel: QRCode.CorrectLevel.M
+      correctLevel: QRCode.CorrectLevel.H
     });
   } else {
-    container.innerHTML = `<div class="p-4 bg-slate-100 text-[10px] text-slate-500 rounded">QR preview ready for ${upiUri}</div>`;
+    container.innerHTML = `<img src="${generateQrImageUrl(upiUri)}" alt="UPI QR" class="w-36 h-36 rounded-lg mx-auto" />`;
   }
+}
+
+/**
+ * Downloads a branded, high-res Payment Bill Slip PNG Image with the QR code
+ */
+function downloadQrSlip(customerName, amount) {
+  const store = appState.settings.storeName || 'Aarav Supermart';
+  const upiId = appState.settings.upiId || 'guptastore@okaxis';
+  const upiUri = generateUpiUri(customerName, amount);
+
+  // Create temporary canvas to draw a beautiful receipt slip
+  const canvas = document.createElement('canvas');
+  canvas.width = 600;
+  canvas.height = 780;
+  const ctx = canvas.getContext('2d');
+
+  // Background
+  ctx.fillStyle = '#f4f6f2';
+  ctx.fillRect(0, 0, 600, 780);
+
+  // Header banner
+  ctx.fillStyle = '#103629';
+  ctx.beginPath();
+  ctx.roundRect(30, 30, 540, 120, 24);
+  ctx.fill();
+
+  ctx.fillStyle = '#f4ebd8';
+  ctx.font = 'bold 28px "Plus Jakarta Sans", sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(store, 300, 80);
+
+  ctx.fillStyle = '#a7f3d0';
+  ctx.font = '16px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText('Digital Payment Receipt & QR Code', 300, 115);
+
+  // White Card for QR & details
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.roundRect(30, 170, 540, 570, 24);
+  ctx.fill();
+
+  // Customer & Amount
+  ctx.fillStyle = '#64748b';
+  ctx.font = '14px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(`Customer: ${customerName}`, 300, 210);
+
+  ctx.fillStyle = '#e11d48';
+  ctx.font = 'extrabold 36px "Plus Jakarta Sans", sans-serif';
+  ctx.fillText(formatINR(amount), 300, 255);
+
+  ctx.fillStyle = '#059669';
+  ctx.font = 'bold 16px monospace';
+  ctx.fillText(`UPI ID: ${upiId}`, 300, 290);
+
+  // Draw QR from container canvas or fetch QR image
+  const existingCanvas = document.querySelector('#qrcode-container canvas');
+  const existingImg = document.querySelector('#qrcode-container img');
+
+  const triggerDownload = (sourceImg) => {
+    if (sourceImg) {
+      ctx.drawImage(sourceImg, 160, 320, 280, 280);
+    }
+    ctx.fillStyle = '#64748b';
+    ctx.font = 'bold 15px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('Scan with GPay, PhonePe, Paytm or BHIM', 300, 640);
+
+    ctx.fillStyle = '#94a3b8';
+    ctx.font = '12px "Plus Jakarta Sans", sans-serif';
+    ctx.fillText('Powered by VyaparPulse • Smart Kirana Ledger', 300, 680);
+
+    const a = document.createElement('a');
+    a.download = `UPI_Payment_QR_${customerName.replace(/\s+/g, '_')}_${amount}.png`;
+    a.href = canvas.toDataURL('image/png');
+    a.click();
+    showToast(`QR Code image downloaded to your device!`, 'success');
+  };
+
+  if (existingCanvas) {
+    triggerDownload(existingCanvas);
+  } else if (existingImg && existingImg.complete) {
+    triggerDownload(existingImg);
+  } else {
+    const tempImg = new Image();
+    tempImg.crossOrigin = 'anonymous';
+    tempImg.onload = () => triggerDownload(tempImg);
+    tempImg.src = generateQrImageUrl(upiUri);
+  }
+}
+
+/**
+ * Intelligent WhatsApp sharing:
+ * 1. On mobile devices with Web Share API: shares BOTH the real QR image file + message text directly!
+ * 2. On desktop or fallback: auto-downloads the QR image and opens wa.me with the message + QR image URL!
+ */
+async function sendViaWhatsAppSmart() {
+  const customer = appState.activeCustomerForModal;
+  if (!customer) return;
+
+  const phone = customer.phone || '9810123456';
+  const text = document.getElementById('composer-message-text').value;
+  const existingCanvas = document.querySelector('#qrcode-container canvas');
+
+  // Check if Mobile Native Web Share API supports file sharing (works seamlessly on Android Chrome / iOS Safari)
+  if (existingCanvas && navigator.share && navigator.canShare) {
+    try {
+      const blob = await new Promise(resolve => existingCanvas.toBlob(resolve, 'image/png'));
+      if (blob) {
+        const file = new File([blob], `Payment_QR_${customer.name.replace(/\s+/g, '_')}.png`, { type: 'image/png' });
+        if (navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            title: `Payment for ${appState.settings.storeName}`,
+            text: text,
+            files: [file]
+          });
+          showToast('Shared QR Code & Reminder directly to WhatsApp!', 'success');
+          return;
+        }
+      }
+    } catch (shareErr) {
+      if (shareErr.name !== 'AbortError') {
+        console.warn('Native share error, falling back to wa.me:', shareErr);
+      } else {
+        return; // User cancelled share sheet
+      }
+    }
+  }
+
+  // Fallback: Download QR Code image file + open wa.me link with message (which also includes the direct QR image link!)
+  downloadQrSlip(customer.name, customer.totalOutstanding);
+  const url = `https://wa.me/91${phone}?text=${encodeURIComponent(text)}`;
+  window.open(url, '_blank');
+  showToast('Opening WhatsApp & QR image saved to your gallery!', 'success');
 }
 
 function directWhatsAppQuick(customerId) {
   const customer = appState.customers.find(c => c.id === customerId);
   if (!customer) return;
 
-  const phone = customer.phone || '9810123456';
+  appState.activeCustomerForModal = customer;
   const upiId = appState.settings.upiId || 'guptastore@okaxis';
   const store = appState.settings.storeName || 'Aarav Supermart';
   const upiUri = generateUpiUri(customer.name, customer.totalOutstanding);
 
   const defaultMsg = buildHinglishUpiMessage(customer.name, customer.totalOutstanding, 'groceries', 'due date', 4, store, upiId, upiUri);
-  const url = `https://wa.me/91${phone}?text=${encodeURIComponent(defaultMsg)}`;
+  
+  // Download QR slip and open WhatsApp
+  downloadQrSlip(customer.name, customer.totalOutstanding);
+  const url = `https://wa.me/91${customer.phone || '9810123456'}?text=${encodeURIComponent(defaultMsg)}`;
   window.open(url, '_blank');
 }
 
@@ -1048,9 +1186,11 @@ function setupSpeechRecognition() {
 
   speechRecognitionInstance.onstart = () => {
     isRecording = true;
-    micPulse.classList.remove('hidden');
-    micStatus.textContent = 'Listening... Speak in Hindi, Hinglish, or English';
-    micStatus.className = 'mt-3.5 font-bold text-xs text-sand-300 animate-pulse';
+    micPulse?.classList.remove('hidden');
+    if (micStatus) {
+      micStatus.textContent = 'Listening... Speak in Hindi, Hinglish, or English';
+      micStatus.className = 'mt-3.5 font-bold text-xs text-sand-300 animate-pulse';
+    }
     setDemoLoopStep(1, 'active');
   };
 
@@ -1065,16 +1205,16 @@ function setupSpeechRecognition() {
 
   speechRecognitionInstance.onerror = (event) => {
     stopRecording();
-    micStatus.textContent = `Mic issue (${event.error}). You can type or tap preset chips.`;
+    if (micStatus) micStatus.textContent = `Mic error (${event.error}). You can type or tap preset chips.`;
   };
 
   speechRecognitionInstance.onend = () => {
     stopRecording();
     if (rawInput.value.trim().length > 0) {
-      micStatus.textContent = 'Transcribed! Passing to AI Extractor...';
+      if (micStatus) micStatus.textContent = 'Transcribed! Passing to AI Extractor...';
       extractTransactionWithBrain(rawInput.value);
     } else {
-      micStatus.textContent = 'Tap mic to speak (Hindi / Hinglish / English)';
+      if (micStatus) micStatus.textContent = 'Tap mic to speak (Hindi / Hinglish / English)';
     }
   };
 
@@ -1320,7 +1460,7 @@ function loadStateFromStorage() {
 }
 
 // ============================================================
-// 10. INITIALIZATION
+// 10. INITIALIZATION & EVENT BINDINGS
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -1433,11 +1573,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('modal-reminder-composer').classList.add('hidden');
   });
 
+  // Download QR Slip
+  document.getElementById('btn-download-qr')?.addEventListener('click', () => {
+    if (appState.activeCustomerForModal) {
+      downloadQrSlip(appState.activeCustomerForModal.name, appState.activeCustomerForModal.totalOutstanding);
+    }
+  });
+
+  // Native Share QR Image
+  document.getElementById('btn-share-native-qr')?.addEventListener('click', () => {
+    sendViaWhatsAppSmart();
+  });
+
   // Copy Reminder Text
   document.getElementById('btn-copy-reminder')?.addEventListener('click', () => {
     const text = document.getElementById('composer-message-text').value;
     navigator.clipboard.writeText(text);
-    showToast('WhatsApp message & UPI link copied!', 'success');
+    showToast('Full WhatsApp message & UPI links copied!', 'success');
   });
 
   // Copy UPI ID
@@ -1447,13 +1599,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(`UPI ID ${upi} copied!`, 'success');
   });
 
-  // Send WhatsApp (Includes UPI Link + Note)
+  // Smart Send on WhatsApp (Shares real image file on mobile or downloads QR + opens wa.me)
   document.getElementById('btn-send-whatsapp')?.addEventListener('click', () => {
-    const text = document.getElementById('composer-message-text').value;
-    const customer = appState.activeCustomerForModal;
-    const phone = customer?.phone || '9810123456';
-    const url = `https://wa.me/91${phone}?text=${encodeURIComponent(text)}`;
-    window.open(url, '_blank');
+    sendViaWhatsAppSmart();
   });
 
   // Settings
@@ -1505,5 +1653,5 @@ document.addEventListener('DOMContentLoaded', async () => {
     showToast(`Speech language set to ${appState.settings.speechLang}`, 'info');
   });
 
-  console.log('VyaparPulse refined mobile UI loaded.');
+  console.log('VyaparPulse refined mobile UI loaded with full QR support.');
 });
