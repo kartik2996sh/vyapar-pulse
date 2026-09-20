@@ -1246,28 +1246,105 @@ function stopRecording() {
 // 8. OCR & CUSTOMER DRAWER
 // ============================================================
 
-async function triggerBillOCR() {
-  const select = document.getElementById('select-ocr-sample');
-  const index = parseInt(select.value || 0, 10);
+let currentUploadedImageBase64 = null;
+let currentUploadedMimeType = 'image/jpeg';
+let currentUploadedFileName = '';
 
-  showToast('Scanning paper slip with OCR...', 'info');
+function setupBillImageUploader() {
+  const fileInput = document.getElementById('input-bill-file');
+  const previewBox = document.getElementById('bill-preview-box');
+  const previewImg = document.getElementById('bill-preview-img');
+  const filenameEl = document.getElementById('bill-filename');
+  const filesizeEl = document.getElementById('bill-filesize');
+  const btnProcess = document.getElementById('btn-process-uploaded-bill');
+
+  fileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    currentUploadedFileName = file.name;
+    currentUploadedMimeType = file.type || 'image/jpeg';
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      currentUploadedImageBase64 = event.target.result;
+      previewImg.src = currentUploadedImageBase64;
+      filenameEl.textContent = file.name;
+      filesizeEl.textContent = `${(file.size / 1024).toFixed(1)} KB • Ready to read`;
+      previewBox.classList.remove('hidden');
+      previewBox.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      showToast('Bill image selected! Tap "Read Bill" to extract.', 'info');
+    };
+    reader.readAsDataURL(file);
+  });
+
+  btnProcess?.addEventListener('click', async () => {
+    if (!currentUploadedImageBase64) {
+      showToast('Please choose or snap a bill image first.', 'warning');
+      return;
+    }
+    await processBillImage(currentUploadedImageBase64, currentUploadedMimeType, currentUploadedFileName);
+  });
+
+  // Sample bill presets
+  document.querySelectorAll('.btn-sample-bill').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const sampleKey = btn.dataset.sample;
+      showToast('Scanning sample kirana bill with AI...', 'info');
+      await processBillImage(null, 'image/jpeg', `${sampleKey}_sample_slip.jpg`, sampleKey);
+    });
+  });
+}
+
+async function processBillImage(imageBase64, mimeType, fileName, sampleKey) {
+  const btnProcess = document.getElementById('btn-process-uploaded-bill');
+  if (btnProcess) {
+    btnProcess.disabled = true;
+    btnProcess.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i><span>Reading...</span>`;
+    lucide.createIcons();
+  }
+
+  showToast('AI reading bill items, customer & total...', 'info');
+  setDemoLoopStep(1, 'active');
+  await sleep(150);
+  setDemoLoopStep(1, 'completed');
+  setDemoLoopStep(2, 'active');
 
   try {
+    const payload = {
+      imageBase64,
+      mimeType,
+      fileName,
+      sampleKey
+    };
+
     const res = await fetch('/api/ocr', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sampleIndex: index })
+      body: JSON.stringify(payload)
     });
-    const data = await res.json();
+    const result = await res.json();
 
-    document.getElementById('btn-mode-text').click();
-    const rawInput = document.getElementById('input-raw-text');
-    rawInput.value = data.ocrText;
-    document.getElementById('char-count').textContent = `${data.ocrText.length} characters`;
+    if (result && result.data) {
+      appState.currentExtraction = {
+        ...result.data,
+        rawInputText: `Bill OCR: ${result.data.customerName} - ${result.data.itemDescription} Total: ₹${result.data.amount}`,
+        source: result.source || 'gemini_vision'
+      };
 
-    await extractTransactionWithBrain(data.ocrText);
+      populateExtractionCard(appState.currentExtraction);
+      setDemoLoopStep(2, 'completed');
+      showToast(`Bill read: ${result.data.customerName} — ₹${result.data.amount.toLocaleString('en-IN')}`, 'success');
+    }
   } catch (err) {
-    showToast('OCR simulation finished.', 'info');
+    console.error('OCR Processing error:', err);
+    showToast('Could not process bill image.', 'warning');
+  } finally {
+    if (btnProcess) {
+      btnProcess.disabled = false;
+      btnProcess.innerHTML = `<i data-lucide="sparkles" class="w-3.5 h-3.5 text-sand-300"></i><span>Read Bill</span>`;
+      lucide.createIcons();
+    }
   }
 }
 
@@ -1528,8 +1605,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     document.getElementById('btn-mode-text').classList.add('text-slate-600');
   });
 
-  // Run OCR
-  document.getElementById('btn-run-ocr')?.addEventListener('click', triggerBillOCR);
+  // Setup Real Bill Image Uploader
+  setupBillImageUploader();
 
   // Refresh insights
   document.getElementById('btn-refresh-insights')?.addEventListener('click', () => {
@@ -1604,13 +1681,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     sendViaWhatsAppSmart();
   });
 
-  // Settings
+  // Settings (Store UPI ID, Name, Owner)
   const openSettings = () => {
     document.getElementById('settings-upi-id').value = appState.settings.upiId || 'guptastore@okaxis';
     document.getElementById('settings-store-name').value = appState.settings.storeName || 'Aarav Supermart';
     document.getElementById('settings-owner-name').value = appState.settings.ownerName || 'Aarav';
-    document.getElementById('settings-engine-mode').value = appState.settings.engineMode || 'auto';
-    document.getElementById('settings-api-key').value = appState.settings.apiKey || '';
     document.getElementById('modal-settings').classList.remove('hidden');
   };
 
@@ -1625,8 +1700,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     appState.settings.upiId = document.getElementById('settings-upi-id').value.trim() || 'guptastore@okaxis';
     appState.settings.storeName = document.getElementById('settings-store-name').value.trim() || 'Aarav Supermart';
     appState.settings.ownerName = document.getElementById('settings-owner-name').value.trim() || 'Aarav';
-    appState.settings.engineMode = document.getElementById('settings-engine-mode').value;
-    appState.settings.apiKey = document.getElementById('settings-api-key').value.trim();
     saveStateToStorage();
     document.getElementById('modal-settings').classList.add('hidden');
     showToast('Store & UPI settings updated.', 'success');
