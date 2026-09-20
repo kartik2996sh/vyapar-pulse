@@ -1,4 +1,4 @@
-/* Custom Styles for VyaparPulse */
+/* VyaparPulse Premium Kirana Styling */
 
 @keyframes slideUp {
   from {
@@ -14,7 +14,7 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.97);
   }
   to {
     opacity: 1;
@@ -23,7 +23,7 @@
 }
 
 .animate-slide-up {
-  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideUp 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .animate-fade-in {
@@ -32,24 +32,26 @@
 
 /* Nav Tab Active State */
 .nav-tab-btn.active {
-  color: #15803d; /* emerald-700 */
+  color: #103629; /* forest-900 */
 }
 
 .nav-tab-btn.active svg {
-  stroke-width: 2.5px;
+  stroke-width: 2.4px;
 }
 
 /* Loop Steps in Header */
 .loop-step.active {
-  background-color: #f59e0b !important;
-  color: #0f172a !important;
+  background-color: #103629 !important;
+  color: #f4ebd8 !important; /* sand-200 */
+  border-color: #103629 !important;
   font-weight: 800;
-  box-shadow: 0 0 10px rgba(245, 158, 11, 0.7);
+  box-shadow: 0 2px 8px rgba(16, 54, 41, 0.2);
 }
 
 .loop-step.completed {
-  background-color: #10b981 !important;
-  color: #ffffff !important;
+  background-color: #e1eae0 !important;
+  color: #164333 !important;
+  border-color: #c5d7c3 !important;
   font-weight: 700;
 }
 
@@ -77,8 +79,14 @@ button:active, .chip-preset:active {
   transform: scale(0.97);
 }
 
-/* Number typography */
-.font-mono {
+/* Tabular Number typography */
+.font-mono, .font-display {
   font-feature-settings: "tnum";
   font-variant-numeric: tabular-nums;
+}
+
+/* QR Code Canvas centering */
+#qrcode-container img, #qrcode-container canvas {
+  margin: 0 auto;
+  border-radius: 8px;
 }

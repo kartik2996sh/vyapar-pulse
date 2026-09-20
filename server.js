@@ -209,14 +209,31 @@ function fallbackGenerateInsights(summary) {
  * BRAIN JOB 3: Reminder Message Writer System Prompt & Fallback
  */
 function fallbackGenerateReminder(params) {
-  const { customerName, amount, itemDescription, dueDate, daysOverdue, storeName = 'Kirana Supermarket' } = params;
+  const { customerName, amount, itemDescription, dueDate, daysOverdue, storeName = 'Gupta Supermarket', upiId = 'guptastore@okaxis' } = params;
   const formattedAmt = `₹${Number(amount || 0).toLocaleString('en-IN')}`;
   const item = itemDescription || 'kirana items';
+  const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${amount}&cu=INR&tn=Bill+Payment`;
 
   if (daysOverdue && daysOverdue > 0) {
-    return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'pichle hafte'} ko due tha aur abhi tak pending hai. Kripya jaldi se bhugtan karne ka kasht karein taaki humari sewa bani rahe. Dhanyavaad — ${storeName}`;
+    return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'pichle hafte'} ko due tha aur pending hai.
+
+Kripya niche diye link se seedha UPI dwara payment karein:
+👉 ${upiLink}
+
+Ya is UPI ID par pay karein:
+🆔 UPI ID: ${upiId}
+
+Dhanyavaad — ${storeName}`;
   } else {
-    return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'is hafte'} ko due hai. Kripya samay par UPI ya cash se bhugtan karein. Dhanyavaad — ${storeName}`;
+    return `Namaste ${customerName || 'ji'}, aapka ${formattedAmt} ka payment (${item}) ${dueDate || 'is hafte'} ko due hai.
+
+Kripya niche diye link se UPI dwara samay par payment karein:
+👉 ${upiLink}
+
+Ya is UPI ID par bhejein:
+🆔 UPI ID: ${upiId}
+
+Dhanyavaad — ${storeName}`;
   }
 }
 
@@ -471,9 +488,10 @@ const server = http.createServer(async (req, res) => {
     // ----------------------------------------------------
     if (pathname === '/api/reminders' && req.method === 'POST') {
       const body = await readBody();
-      const { customerName, amount, itemDescription, dueDate, daysOverdue, storeName, apiKey, provider = 'gemini' } = body;
+      const { customerName, amount, itemDescription, dueDate, daysOverdue, storeName = 'Gupta Supermarket', upiId = 'guptastore@okaxis', apiKey, provider = 'gemini' } = body;
+      const upiLink = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(storeName)}&am=${amount}&cu=INR&tn=Bill+Payment`;
 
-      const reminderPrompt = `You are a polite assistant for a neighborhood Indian grocery store called "${storeName || 'Kirana Supermarket'}". 
+      const reminderPrompt = `You are a polite assistant for a neighborhood Indian grocery store called "${storeName}". 
 Write a natural, respectful payment reminder message in Hinglish / Hindi. 
 Details:
 - Customer Name: ${customerName}
@@ -481,7 +499,9 @@ Details:
 - Items: ${itemDescription || 'grocery items'}
 - Due Date: ${dueDate}
 - Days Overdue: ${daysOverdue || 0}
-Keep it short (2-3 sentences), warm, and include the store name. Respond with ONLY the message text.`;
+- Direct UPI Link: ${upiLink}
+- Store UPI ID: ${upiId}
+Keep it short (3-4 sentences), warm, and include both the UPI Link and the UPI ID clearly so the customer can tap and pay immediately. Respond with ONLY the message text.`;
 
       try {
         const message = await callLLM({
