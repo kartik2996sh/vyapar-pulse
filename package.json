@@ -1,0 +1,21 @@
+{
+  "name": "vyapar-pulse",
+  "version": "1.0.0",
+  "description": "VyaparPulse — Smart Supermarket Ledger & Financial Assistant for Indian Kirana Stores",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "fintech",
+    "kirana",
+    "supermarket",
+    "ledger",
+    "udhaar",
+    "ai-agent",
+    "vyapar"
+  ],
+  "author": "VyaparPulse Team",
+  "license": "MIT"
+}

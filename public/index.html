@@ -1,0 +1,735 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>VyaparPulse — Smart Supermarket Ledger</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#16a34a',
+              600: '#15803d',
+              700: '#166534',
+              800: '#14532d',
+              900: '#052e16'
+            },
+            amberkirana: {
+              500: '#f59e0b',
+              600: '#d97706'
+            }
+          },
+          boxShadow: {
+            'touch': '0 4px 20px -2px rgba(0, 0, 0, 0.08), 0 2px 6px -2px rgba(0, 0, 0, 0.04)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="h-full font-sans antialiased text-slate-800 bg-slate-100 flex flex-col items-center select-none md:select-auto">
+
+  <!-- Mobile Wrapper Device Frame (Max Width 480px for Authentic Mobile Experience on Desktop) -->
+  <div class="w-full max-w-md bg-white min-h-screen flex flex-col shadow-2xl relative overflow-hidden border-x border-slate-200">
+
+    <!-- Top App Bar -->
+    <header class="bg-gradient-to-r from-emerald-800 via-emerald-700 to-teal-800 text-white px-4 pt-3 pb-3 sticky top-0 z-30 shadow-md">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-400 text-slate-900 flex items-center justify-center font-black text-lg shadow-sm">
+            VP
+          </div>
+          <div>
+            <div class="flex items-center space-x-1.5">
+              <h1 class="font-extrabold text-base tracking-tight leading-tight">VyaparPulse</h1>
+              <span class="bg-emerald-600/80 text-[10px] font-semibold px-1.5 py-0.5 rounded text-emerald-100 uppercase tracking-wider">Kirana AI</span>
+            </div>
+            <p class="text-[11px] text-emerald-200 font-medium">Gupta Supermarket • Cash Counter</p>
+          </div>
+        </div>
+
+        <!-- Header Actions -->
+        <div class="flex items-center space-x-1.5">
+          <button id="btn-supplier-modal" class="p-2 rounded-lg bg-emerald-900/50 hover:bg-emerald-900 text-emerald-100 text-xs flex items-center space-x-1" title="Supplier Dues">
+            <i data-lucide="truck" class="w-4 h-4"></i>
+          </button>
+          <button id="btn-settings-modal" class="p-2 rounded-lg bg-emerald-900/50 hover:bg-emerald-900 text-emerald-100 text-xs flex items-center space-x-1" title="AI Settings & Provider">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Live 5-Step Demo Verification Tracker -->
+      <div class="mt-2.5 pt-2 border-t border-emerald-600/50">
+        <div class="flex items-center justify-between text-[10px] font-semibold text-emerald-200 mb-1">
+          <span class="flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>
+            LIVE VERIFICATION LOOP (60s)
+          </span>
+          <span id="demo-loop-badge" class="bg-emerald-900/70 text-amber-300 px-1.5 py-0.5 rounded text-[9px] font-mono">READY</span>
+        </div>
+        <div class="grid grid-cols-5 gap-1 text-[9px] text-center font-medium">
+          <div id="step-1" class="loop-step bg-emerald-900/60 text-emerald-300 py-1 rounded transition-all">1. Voice/Text</div>
+          <div id="step-2" class="loop-step bg-emerald-900/60 text-emerald-300 py-1 rounded transition-all">2. Brain Parse</div>
+          <div id="step-3" class="loop-step bg-emerald-900/60 text-emerald-300 py-1 rounded transition-all">3. Ledger Sync</div>
+          <div id="step-4" class="loop-step bg-emerald-900/60 text-emerald-300 py-1 rounded transition-all">4. Due Dates</div>
+          <div id="step-5" class="loop-step bg-emerald-900/60 text-emerald-300 py-1 rounded transition-all">5. AI Insight</div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Tab Content Area (Scrollable) -->
+    <main class="flex-1 overflow-y-auto pb-24 bg-slate-50 relative">
+
+      <!-- ============================================== -->
+      <!-- TAB 1: DASHBOARD & CASH-FLOW                   -->
+      <!-- ============================================== -->
+      <section id="tab-dashboard" class="tab-page p-4 space-y-4">
+        
+        <!-- Actionable Financial Insights Card (BRAIN JOB 2) -->
+        <div class="bg-gradient-to-br from-amber-50 to-orange-50 border-2 border-amber-300/80 rounded-2xl p-4 shadow-sm relative overflow-hidden">
+          <div class="absolute -right-3 -top-3 w-16 h-16 bg-amber-200/40 rounded-full blur-lg pointer-events-none"></div>
+          
+          <div class="flex items-center justify-between mb-2.5">
+            <div class="flex items-center space-x-2">
+              <div class="p-1.5 bg-amber-500 text-white rounded-lg shadow-sm">
+                <i data-lucide="sparkles" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-amber-950 flex items-center gap-1.5">
+                  AI Cash-Flow Pulse
+                  <span id="insight-source-badge" class="text-[9px] font-mono font-bold bg-amber-200 text-amber-900 px-1.5 py-0.5 rounded">BRAIN JOB 2</span>
+                </h3>
+                <p class="text-[10px] text-amber-700">Actionable advice for counter decisions</p>
+              </div>
+            </div>
+            <button id="btn-refresh-insights" class="text-amber-800 hover:text-amber-950 p-1.5 rounded-lg hover:bg-amber-100 transition-colors" title="Regenerate Insights">
+              <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- Insight Sentences Container -->
+          <div id="insights-container" class="space-y-2">
+            <div class="flex items-start space-x-2 text-xs text-amber-950 bg-white/80 p-2.5 rounded-xl border border-amber-200/70 shadow-2xs">
+              <i data-lucide="trending-up" class="w-4 h-4 text-emerald-600 mt-0.5 shrink-0"></i>
+              <span id="insight-line-1" class="font-medium leading-relaxed">Analyzing store ledger data...</span>
+            </div>
+            <div class="flex items-start space-x-2 text-xs text-amber-950 bg-white/80 p-2.5 rounded-xl border border-amber-200/70 shadow-2xs">
+              <i data-lucide="alert-circle" class="w-4 h-4 text-rose-600 mt-0.5 shrink-0"></i>
+              <span id="insight-line-2" class="font-medium leading-relaxed">Loading overdue customer receivables...</span>
+            </div>
+            <div class="flex items-start space-x-2 text-xs text-amber-950 bg-white/80 p-2.5 rounded-xl border border-amber-200/70 shadow-2xs">
+              <i data-lucide="pie-chart" class="w-4 h-4 text-amber-600 mt-0.5 shrink-0"></i>
+              <span id="insight-line-3" class="font-medium leading-relaxed">Checking top debtor concentration...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cash Shortage Warning Banner (When applicable) -->
+        <div id="shortage-banner" class="hidden bg-rose-50 border border-rose-300 rounded-xl p-3 flex items-center justify-between text-xs text-rose-900">
+          <div class="flex items-center space-x-2">
+            <i data-lucide="shield-alert" class="w-5 h-5 text-rose-600 shrink-0"></i>
+            <div>
+              <p class="font-bold">Cash Shortage Risk Flagged</p>
+              <p class="text-[11px] text-rose-700">₹45,000 supplier invoice due Friday. Need ₹18,000 collections.</p>
+            </div>
+          </div>
+          <button onclick="switchTab('tab-reminders')" class="bg-rose-600 text-white font-bold text-[10px] px-2.5 py-1.5 rounded-lg shadow-sm hover:bg-rose-700">
+            Collect Now
+          </button>
+        </div>
+
+        <!-- Primary Financial KPI Cards (2x2 Grid) -->
+        <div class="grid grid-cols-2 gap-3">
+          <!-- Card 1: Today's Sales -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-1">
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Today's Sales</span>
+              <i data-lucide="shopping-bag" class="w-4 h-4 text-emerald-600"></i>
+            </div>
+            <div id="stat-todays-sales" class="text-xl font-black text-slate-900">₹0</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Cash + New Udhaar</div>
+          </div>
+
+          <!-- Card 2: Today's Collections -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-1">
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Collections</span>
+              <i data-lucide="arrow-down-left" class="w-4 h-4 text-blue-600"></i>
+            </div>
+            <div id="stat-todays-collections" class="text-xl font-black text-blue-700">₹0</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Cash collected today</div>
+          </div>
+
+          <!-- Card 3: Total Outstanding Udhaar -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-1">
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Total Udhaar</span>
+              <i data-lucide="book-open" class="w-4 h-4 text-amber-500"></i>
+            </div>
+            <div id="stat-total-outstanding" class="text-xl font-black text-amber-600">₹0</div>
+            <div class="text-[10px] text-slate-400 mt-0.5">Across all customers</div>
+          </div>
+
+          <!-- Card 4: Total Overdue Receivables -->
+          <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+            <div class="flex items-center justify-between text-slate-500 mb-1">
+              <span class="text-[11px] font-semibold uppercase tracking-wider">Total Overdue</span>
+              <i data-lucide="clock" class="w-4 h-4 text-rose-600"></i>
+            </div>
+            <div id="stat-total-overdue" class="text-xl font-black text-rose-600">₹0</div>
+            <div id="stat-overdue-count" class="text-[10px] text-rose-500 font-medium mt-0.5">0 customers overdue</div>
+          </div>
+        </div>
+
+        <!-- Receivables Forecast Chart (Next 7 Days) -->
+        <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <h4 class="font-bold text-xs text-slate-800">Expected Receivables (Next 7 Days)</h4>
+              <p class="text-[10px] text-slate-500">When will customer credit land in your drawer?</p>
+            </div>
+            <span id="chart-7day-total" class="font-mono font-bold text-xs text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              ₹0
+            </span>
+          </div>
+          <div class="h-44 w-full">
+            <canvas id="receivablesChart"></canvas>
+          </div>
+        </div>
+
+        <!-- 30-Day Forecast & Shortage Week (Stretch Brain Job 5) -->
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center space-x-1.5">
+              <i data-lucide="calendar-range" class="w-4 h-4 text-purple-600"></i>
+              <h4 class="font-bold text-xs text-slate-800">30-Day Predictive Cash Forecast</h4>
+            </div>
+            <span class="text-[9px] bg-purple-100 text-purple-800 font-bold px-1.5 py-0.5 rounded">BRAIN JOB 5</span>
+          </div>
+          <div id="forecast-summary-text" class="text-xs text-slate-600 mb-3 leading-relaxed">
+            Predicting payment patterns vs supplier commitments...
+          </div>
+          <div id="forecast-timeline" class="grid grid-cols-4 gap-1.5 text-center text-[10px]">
+            <!-- Injected by JavaScript -->
+          </div>
+        </div>
+
+        <!-- Quick Floating Action Trigger -->
+        <div class="pt-1 pb-2">
+          <button onclick="switchTab('tab-add')" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg flex items-center justify-center space-x-2 text-sm transition-all active:scale-[0.98]">
+            <i data-lucide="mic" class="w-5 h-5 animate-pulse"></i>
+            <span>Record Voice / Text Transaction</span>
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: ADD TRANSACTION (BRAIN JOB 1)           -->
+      <!-- ============================================== -->
+      <section id="tab-add" class="tab-page hidden p-4 space-y-4">
+        
+        <!-- Header Guidance -->
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="zap" class="w-4 h-4 text-amber-500"></i>
+              Fast Transaction Capture
+            </h2>
+            <span class="text-[9px] font-mono font-bold bg-emerald-100 text-emerald-800 px-1.5 py-0.5 rounded">
+              BRAIN JOB 1
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Speak or type naturally in Hindi, Hinglish, or English. AI extracts customer, items, and credit terms in &lt;10 seconds.
+          </p>
+        </div>
+
+        <!-- Mode Toggle: Voice/Text vs Handwritten Bill OCR -->
+        <div class="flex rounded-lg bg-slate-200 p-1 text-xs font-semibold">
+          <button id="btn-mode-text" class="flex-1 py-1.5 rounded-md bg-white shadow-xs text-slate-900 flex items-center justify-center gap-1">
+            <i data-lucide="message-square" class="w-3.5 h-3.5 text-emerald-600"></i>
+            Voice & Quick Text
+          </button>
+          <button id="btn-mode-ocr" class="flex-1 py-1.5 rounded-md text-slate-600 hover:text-slate-900 flex items-center justify-center gap-1">
+            <i data-lucide="scan-line" class="w-3.5 h-3.5 text-purple-600"></i>
+            Bill Paper OCR (Bonus)
+          </button>
+        </div>
+
+        <!-- Mode 1 Container: Voice & Text Input -->
+        <div id="container-voice-text" class="space-y-3">
+          
+          <!-- Mic Recording Area -->
+          <div class="bg-gradient-to-b from-slate-900 to-slate-800 rounded-2xl p-5 text-center text-white relative shadow-md">
+            <button id="btn-mic-toggle" class="w-20 h-20 rounded-full bg-emerald-500 hover:bg-emerald-400 active:scale-95 text-white flex items-center justify-center mx-auto shadow-xl transition-all relative">
+              <i data-lucide="mic" class="w-9 h-9"></i>
+              <div id="mic-pulse-ring" class="hidden absolute inset-0 rounded-full border-4 border-emerald-300 animate-ping"></div>
+            </button>
+            <div id="mic-status-label" class="mt-3 font-semibold text-xs text-emerald-300">
+              Tap mic to speak (Hinglish / Hindi / English)
+            </div>
+            <div class="flex justify-center items-center gap-2 mt-2">
+              <button id="btn-lang-toggle" class="text-[10px] bg-slate-700/80 px-2 py-0.5 rounded text-slate-300 hover:text-white">
+                Language: <span id="current-lang-code" class="font-bold text-amber-400">hi-IN / en-IN</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Free-Text Input Box -->
+          <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-sm space-y-2">
+            <label class="block text-[11px] font-bold text-slate-700">Or type what just happened:</label>
+            <textarea id="input-raw-text" rows="3" class="w-full text-xs p-2.5 rounded-lg border border-slate-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-slate-800 placeholder-slate-400 outline-none" placeholder="e.g. Sharma ji took 2400 rupees worth of groceries on 7 days credit"></textarea>
+            
+            <div class="flex items-center justify-between pt-1">
+              <span id="char-count" class="text-[10px] text-slate-400">0 characters</span>
+              <button id="btn-parse-text" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm flex items-center space-x-1.5 transition-all">
+                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                <span>Extract with AI</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quick Preset Test Chips (For Instant Demo without Typing) -->
+          <div class="space-y-1.5">
+            <div class="text-[10px] font-bold uppercase tracking-wider text-slate-500">Live Demo Quick Presets:</div>
+            <div class="flex flex-wrap gap-1.5">
+              <button class="chip-preset text-[11px] bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 px-2.5 py-1 rounded-lg font-medium transition-colors" data-preset="Sharma ji took 2400 rupees worth of groceries on 7 days credit">
+                🎯 Sharma ji ₹2400 (7d credit)
+              </button>
+              <button class="chip-preset text-[11px] bg-blue-50 hover:bg-blue-100 text-blue-800 border border-blue-200 px-2.5 py-1 rounded-lg font-medium transition-colors" data-preset="Ravi ne 500 rupaye chukaye aaj">
+                💸 Ravi ₹500 payment
+              </button>
+              <button class="chip-preset text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 px-2.5 py-1 rounded-lg font-medium transition-colors" data-preset="Sold rice and dal to Meena for 800, cash">
+                💵 Meena ₹800 cash
+              </button>
+              <button class="chip-preset text-[11px] bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1 rounded-lg font-medium transition-colors" data-preset="Patel bhai 3500 rupaye ka rashan 15 din udhaar">
+                📦 Patel ₹3500 (15d credit)
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mode 2 Container: Handwritten Bill OCR (Stretch Goal) -->
+        <div id="container-ocr" class="hidden space-y-3">
+          <div class="bg-white p-4 rounded-xl border border-purple-200 shadow-sm space-y-3 text-center">
+            <div class="w-14 h-14 bg-purple-50 text-purple-600 rounded-full flex items-center justify-center mx-auto">
+              <i data-lucide="camera" class="w-7 h-7"></i>
+            </div>
+            <div>
+              <h3 class="font-bold text-xs text-slate-800">Scan Paper Slip / Bill</h3>
+              <p class="text-[10px] text-slate-500 mt-0.5">Upload a photo of handwritten bill or simulate counter slip OCR</p>
+            </div>
+
+            <!-- OCR Sample Selector -->
+            <div class="bg-purple-50 p-2.5 rounded-lg border border-purple-100 text-left text-xs space-y-1.5">
+              <div class="font-bold text-purple-900 text-[11px]">Select a sample bill to scan:</div>
+              <select id="select-ocr-sample" class="w-full text-xs p-1.5 rounded border border-purple-200 bg-white">
+                <option value="0">Bill #101: Sharma ji - Atta 10kg, Sugar 5kg, Rice - ₹1,940 (Credit 10 days)</option>
+                <option value="1">Bill #102: Gupta Brothers - Dal, Spices - ₹650 (Paid cash)</option>
+                <option value="2">Bill #103: Verma ji - Refined Oil, Soap, Tea - ₹1,190 (Credit 7 days)</option>
+                <option value="3">Bill #104: Ramesh Patel - ₹500 cash payment settlement</option>
+              </select>
+            </div>
+
+            <button id="btn-run-ocr" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs py-2.5 rounded-lg shadow-sm flex items-center justify-center space-x-1.5">
+              <i data-lucide="scan" class="w-4 h-4"></i>
+              <span>Simulate Counter Bill OCR ➔ Extractor</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- BRAIN JOB 1: Structured Extraction Confirmation Card -->
+        <div id="card-extraction-result" class="hidden bg-white border-2 border-emerald-500 rounded-2xl p-4 shadow-touch space-y-3 animate-fade-in">
+          <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+            <div class="flex items-center space-x-1.5">
+              <span id="badge-confidence" class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">
+                High Confidence
+              </span>
+              <span id="badge-source" class="text-[9px] font-mono text-slate-400">
+                Live LLM
+              </span>
+            </div>
+            <span class="text-[11px] text-slate-500 font-medium">Verify Entry</span>
+          </div>
+
+          <!-- Editable Structured Fields -->
+          <div class="space-y-2.5 text-xs">
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Customer</label>
+                <input id="res-customer" type="text" class="w-full p-2 rounded-lg border border-slate-200 font-bold text-slate-800 focus:border-emerald-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Type</label>
+                <select id="res-type" class="w-full p-2 rounded-lg border border-slate-200 font-bold text-slate-800 focus:border-emerald-500 outline-none bg-white">
+                  <option value="credit_sale">Credit Sale (Udhaar)</option>
+                  <option value="payment_received">Payment Received</option>
+                  <option value="cash_sale">Cash Sale (Immediate)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Amount (₹)</label>
+                <input id="res-amount" type="number" class="w-full p-2 rounded-lg border border-slate-200 font-black text-slate-900 text-sm focus:border-emerald-500 outline-none">
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-500 uppercase">Credit Days</label>
+                <input id="res-credit-days" type="number" class="w-full p-2 rounded-lg border border-slate-200 font-bold text-slate-800 focus:border-emerald-500 outline-none">
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-[10px] font-bold text-slate-500 uppercase">Items / Description</label>
+              <input id="res-items" type="text" class="w-full p-2 rounded-lg border border-slate-200 text-slate-800 focus:border-emerald-500 outline-none">
+            </div>
+
+            <!-- Due Date preview (Plain-code calculated) -->
+            <div id="res-due-preview" class="p-2 bg-emerald-50 rounded-lg text-[11px] text-emerald-800 flex items-center justify-between font-medium">
+              <span>Due Date:</span>
+              <span id="res-due-date-text" class="font-bold">7 days from now</span>
+            </div>
+          </div>
+
+          <!-- Save / Confirm Actions -->
+          <div class="pt-1 flex items-center space-x-2">
+            <button id="btn-save-transaction" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-4 rounded-xl shadow-sm text-xs flex items-center justify-center space-x-1 transition-all">
+              <i data-lucide="check" class="w-4 h-4"></i>
+              <span>Confirm & Save to Ledger</span>
+            </button>
+            <button id="btn-cancel-extraction" class="p-2.5 rounded-xl border border-slate-200 hover:bg-slate-100 text-slate-500 text-xs font-semibold">
+              Discard
+            </button>
+          </div>
+        </div>
+
+        <!-- Manual Entry Toggle Link -->
+        <div class="text-center pt-2">
+          <button id="btn-toggle-manual-form" class="text-xs text-slate-500 hover:text-slate-800 underline font-medium">
+            Prefer standard manual form? Click here
+          </button>
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: CUSTOMER LEDGER                         -->
+      <!-- ============================================== -->
+      <section id="tab-ledger" class="tab-page hidden p-4 space-y-4">
+        
+        <!-- Search & Filter Bar -->
+        <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-2">
+          <i data-lucide="search" class="w-4 h-4 text-slate-400 shrink-0"></i>
+          <input id="search-ledger" type="text" class="w-full text-xs text-slate-800 placeholder-slate-400 outline-none" placeholder="Search customer by name or phone...">
+          <button id="btn-clear-search" class="hidden text-slate-400 hover:text-slate-600 p-1">
+            <i data-lucide="x" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+
+        <!-- Ledger Summary Header -->
+        <div class="flex items-center justify-between text-xs px-1 font-semibold text-slate-600">
+          <span>Customer Khata (Sorted by Udhaar)</span>
+          <span id="ledger-customer-count" class="text-slate-400 font-normal">6 Customers</span>
+        </div>
+
+        <!-- Customer List Container -->
+        <div id="customer-list-container" class="space-y-2.5">
+          <!-- Dynamically populated customer cards -->
+        </div>
+
+      </section>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: REMINDERS (BRAIN JOB 3)                 -->
+      <!-- ============================================== -->
+      <section id="tab-reminders" class="tab-page hidden p-4 space-y-4">
+        
+        <!-- Guidance Header -->
+        <div class="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
+          <div class="flex items-center justify-between mb-1">
+            <h2 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+              <i data-lucide="send" class="w-4 h-4 text-emerald-600"></i>
+              Payment Reminders
+            </h2>
+            <span class="text-[9px] font-mono font-bold bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded">
+              BRAIN JOB 3
+            </span>
+          </div>
+          <p class="text-[11px] text-slate-500">
+            Polite Hindi / Hinglish reminders crafted for WhatsApp. Protects customer relationships while accelerating collections.
+          </p>
+        </div>
+
+        <!-- Reminders List Grouped by Urgency -->
+        <div class="space-y-3">
+          <div class="text-[10px] font-bold text-rose-700 uppercase tracking-wider flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-rose-600"></span>
+            Overdue Collections (Urgent Follow-up)
+          </div>
+
+          <div id="reminders-overdue-container" class="space-y-2.5">
+            <!-- Overdue customer cards -->
+          </div>
+
+          <div class="text-[10px] font-bold text-amber-700 uppercase tracking-wider flex items-center gap-1 pt-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Due Soon (Next 7 Days)
+          </div>
+
+          <div id="reminders-upcoming-container" class="space-y-2.5">
+            <!-- Upcoming customer cards -->
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- Bottom Navigation Bar (4 Mobile-First Tabs) -->
+    <nav class="bg-white border-t border-slate-200 px-2 py-1.5 flex items-center justify-around absolute bottom-0 left-0 right-0 z-30 shadow-lg">
+      
+      <!-- Nav 1: Dashboard -->
+      <button onclick="switchTab('tab-dashboard')" class="nav-tab-btn active flex flex-col items-center py-1 px-3 text-slate-500 transition-colors" data-target="tab-dashboard">
+        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Dashboard</span>
+      </button>
+
+      <!-- Nav 2: Add Transaction (Primary Call-to-Action) -->
+      <button onclick="switchTab('tab-add')" class="nav-tab-btn flex flex-col items-center py-1 px-3 text-slate-500 transition-colors" data-target="tab-add">
+        <div class="w-8 h-8 rounded-full bg-emerald-600 text-white flex items-center justify-center -mt-3 shadow-md">
+          <i data-lucide="plus" class="w-5 h-5"></i>
+        </div>
+        <span class="text-[10px] font-bold mt-0.5">Quick Add</span>
+      </button>
+
+      <!-- Nav 3: Ledger -->
+      <button onclick="switchTab('tab-ledger')" class="nav-tab-btn flex flex-col items-center py-1 px-3 text-slate-500 transition-colors" data-target="tab-ledger">
+        <i data-lucide="book" class="w-5 h-5"></i>
+        <span class="text-[10px] font-bold mt-1">Ledger</span>
+      </button>
+
+      <!-- Nav 4: Reminders -->
+      <button onclick="switchTab('tab-reminders')" class="nav-tab-btn flex flex-col items-center py-1 px-3 text-slate-500 transition-colors relative" data-target="tab-reminders">
+        <i data-lucide="bell" class="w-5 h-5"></i>
+        <span id="nav-reminders-badge" class="hidden absolute top-1 right-3 w-2 h-2 rounded-full bg-rose-600"></span>
+        <span class="text-[10px] font-bold mt-1">Reminders</span>
+      </button>
+
+    </nav>
+
+    <!-- ============================================== -->
+    <!-- MODAL 1: CUSTOMER TRANSACTION DETAIL DRAWER    -->
+    <!-- ============================================== -->
+    <div id="modal-customer-drawer" class="hidden fixed inset-0 z-50 flex items-end justify-center bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-md rounded-t-3xl shadow-2xl p-5 max-h-[85vh] flex flex-col animate-slide-up">
+        
+        <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+          <div>
+            <h3 id="drawer-customer-name" class="font-bold text-base text-slate-900">Sharma ji</h3>
+            <p id="drawer-customer-phone" class="text-xs text-slate-500">+91 98765 43210</p>
+          </div>
+          <button id="btn-close-drawer" class="p-2 text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+
+        <!-- Customer Summary Stats -->
+        <div class="grid grid-cols-2 gap-2 my-3">
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <span class="text-[10px] font-bold uppercase text-slate-400">Total Outstanding</span>
+            <div id="drawer-total-outstanding" class="text-lg font-black text-rose-600">₹0</div>
+          </div>
+          <div class="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+            <span class="text-[10px] font-bold uppercase text-slate-400">Payment Status</span>
+            <div id="drawer-status-badge" class="text-xs font-bold mt-1 text-slate-700">Clear</div>
+          </div>
+        </div>
+
+        <!-- Transaction History List -->
+        <div class="flex-1 overflow-y-auto space-y-2 pr-1" id="drawer-tx-history">
+          <!-- Injected dynamically -->
+        </div>
+
+        <!-- Quick Reminder Button -->
+        <div class="pt-3 border-t border-slate-100 mt-2">
+          <button id="drawer-btn-reminder" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-3 rounded-xl shadow-sm flex items-center justify-center space-x-1.5">
+            <i data-lucide="message-circle" class="w-4 h-4"></i>
+            <span>Compose WhatsApp Reminder</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 2: REMINDER COMPOSER (BRAIN JOB 3)       -->
+    <!-- ============================================== -->
+    <div id="modal-reminder-composer" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-3 animate-fade-in">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i>
+            AI Reminder Writer
+          </h3>
+          <button id="btn-close-reminder-modal" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-600">
+          Sending to: <span id="composer-customer-target" class="font-bold text-slate-900">Sharma ji</span>
+          (<span id="composer-customer-amt" class="text-rose-600 font-bold">₹2,400</span>)
+        </div>
+
+        <!-- Editable AI Message Box -->
+        <div class="space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label class="text-[10px] font-bold uppercase text-slate-400">Polite Hinglish Message:</label>
+            <button id="btn-regenerate-reminder-text" class="text-[10px] text-emerald-700 font-bold hover:underline flex items-center gap-1">
+              <i data-lucide="refresh-cw" class="w-3 h-3"></i> Reword
+            </button>
+          </div>
+          <textarea id="composer-message-text" rows="4" class="w-full text-xs p-3 rounded-xl border border-slate-300 focus:border-emerald-500 outline-none text-slate-800 leading-relaxed"></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex space-x-2 pt-1">
+          <button id="btn-copy-reminder" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2.5 rounded-xl flex items-center justify-center space-x-1">
+            <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+            <span>Copy Text</span>
+          </button>
+          <button id="btn-send-whatsapp" class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 rounded-xl shadow-sm flex items-center justify-center space-x-1">
+            <i data-lucide="send" class="w-3.5 h-3.5"></i>
+            <span>Send WhatsApp</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 3: SETTINGS & LLM KEY CONFIGURATION      -->
+    <!-- ============================================== -->
+    <div id="modal-settings" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-4">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="sliders" class="w-4 h-4 text-emerald-600"></i>
+            AI & Store Settings
+          </h3>
+          <button id="btn-close-settings" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <div class="space-y-3 text-xs">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">AI Engine Mode</label>
+            <select id="settings-engine-mode" class="w-full p-2 rounded-lg border border-slate-300 text-slate-800 bg-white">
+              <option value="auto">Auto (Live LLM with Rule Fallback)</option>
+              <option value="gemini">Google Gemini 1.5 Flash</option>
+              <option value="openai">OpenAI GPT-4o-mini</option>
+              <option value="claude">Anthropic Claude 3.5</option>
+              <option value="offline">Strict Local Fallback (No External API)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Optional LLM API Key (Browser-level)</label>
+            <input id="settings-api-key" type="password" placeholder="AIza... or sk-..." class="w-full p-2 rounded-lg border border-slate-300 font-mono text-xs">
+            <p class="text-[10px] text-slate-400 mt-1">Keys are kept local in browser memory or .env on the server.</p>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Store Name</label>
+            <input id="settings-store-name" type="text" value="Gupta Supermarket" class="w-full p-2 rounded-lg border border-slate-300 font-medium">
+          </div>
+
+          <div class="pt-2 border-t border-slate-100 flex items-center justify-between">
+            <button id="btn-reset-demo-data" class="text-rose-600 hover:text-rose-700 text-[11px] font-bold flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Reset Demo Data
+            </button>
+            <button id="btn-save-settings" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1.5 rounded-lg">
+              Save Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================== -->
+    <!-- MODAL 4: SUPPLIER PAYMENTS (STRETCH FEATURE)   -->
+    <!-- ============================================== -->
+    <div id="modal-supplier" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs">
+      <div class="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-5 space-y-3">
+        <div class="flex items-center justify-between pb-2 border-b border-slate-100">
+          <h3 class="font-bold text-sm text-slate-900 flex items-center gap-1.5">
+            <i data-lucide="truck" class="w-4 h-4 text-emerald-600"></i>
+            Supplier Payment Tracker
+          </h3>
+          <button id="btn-close-supplier" class="text-slate-400 hover:text-slate-600">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <p class="text-[11px] text-slate-500">
+          Upcoming distributor dues to balance against customer receivables:
+        </p>
+
+        <div class="space-y-2 text-xs">
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-slate-800">Parle-G & Britannia Distributor</div>
+              <div class="text-[10px] text-slate-400">Due in 2 days (Tue)</div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-slate-900">₹28,000</div>
+              <span class="text-[9px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">Upcoming</span>
+            </div>
+          </div>
+
+          <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+            <div>
+              <div class="font-bold text-slate-800">Hindustan Unilever Wholesale</div>
+              <div class="text-[10px] text-slate-400">Due in 6 days (Fri)</div>
+            </div>
+            <div class="text-right">
+              <div class="font-bold text-slate-900">₹42,000</div>
+              <span class="text-[9px] bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded font-bold">High Outflow</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="p-2.5 bg-amber-50 rounded-xl border border-amber-200 text-[11px] text-amber-900">
+          💡 <strong>Decision Support:</strong> Total supplier dues this week = ₹70,000. Expected customer collections = ₹54,500. Push overdue reminders to cover the ₹15,500 gap!
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col gap-2 pointer-events-none w-11/12 max-w-sm"></div>
+
+  </div>
+
+  <!-- Main Application Logic Script -->
+  <script src="app.js"></script>
+</body>
+</html>
